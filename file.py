@@ -19,7 +19,7 @@ days = np.arange(1, 101)
 prices = 100 + np.random.normal(0, 1, 100).cumsum()  # random walk
 
 data = pd.DataFrame({"Day": days, "Price": prices})
-print("📈 Sample Data:\n", data.head())
+print("Sample Data:\n", data.head())
 
 # -----------------------------
 # 🧠 STEP 2: Linear Regression Model
@@ -36,7 +36,7 @@ y_pred_lin = lin_model.predict(X_test)
 plt.figure(figsize=(10, 5))
 plt.scatter(X, y, color="gray", label="Actual Prices")
 plt.plot(X_test, y_pred_lin, color="red", linewidth=2, label="Linear Regression")
-plt.title("📊 Linear Regression - Stock Price Prediction")
+plt.title(" Linear Regression - Stock Price Prediction")
 plt.xlabel("Day")
 plt.ylabel("Price")
 plt.legend()
@@ -45,7 +45,7 @@ plt.show()
 print("\n✅ Linear Regression R² Score:", lin_model.score(X_test, y_test))
 
 # -----------------------------
-# 🤖 STEP 3: LSTM Model
+#  STEP 3: LSTM Model
 # -----------------------------
 # Prepare data for LSTM
 scaler = MinMaxScaler(feature_range=(0, 1))
