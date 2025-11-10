@@ -1,0 +1,94 @@
+# stock_price_prediction.py
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, LSTM
+
+# -----------------------------
+# 📊 STEP 1: Create / Load Data
+# -----------------------------
+# We'll generate simple sample data (or replace with your own CSV)
+# Simulating 100 days of stock prices
+np.random.seed(42)
+days = np.arange(1, 101)
+prices = 100 + np.random.normal(0, 1, 100).cumsum()  # random walk
+
+data = pd.DataFrame({"Day": days, "Price": prices})
+print("📈 Sample Data:\n", data.head())
+
+# -----------------------------
+# 🧠 STEP 2: Linear Regression Model
+# -----------------------------
+X = data[["Day"]]
+y = data["Price"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+lin_model = LinearRegression()
+lin_model.fit(X_train, y_train)
+y_pred_lin = lin_model.predict(X_test)
+
+plt.figure(figsize=(10, 5))
+plt.scatter(X, y, color="gray", label="Actual Prices")
+plt.plot(X_test, y_pred_lin, color="red", linewidth=2, label="Linear Regression")
+plt.title("📊 Linear Regression - Stock Price Prediction")
+plt.xlabel("Day")
+plt.ylabel("Price")
+plt.legend()
+plt.show()
+
+print("\n✅ Linear Regression R² Score:", lin_model.score(X_test, y_test))
+
+# -----------------------------
+# 🤖 STEP 3: LSTM Model
+# -----------------------------
+# Prepare data for LSTM
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(data["Price"].values.reshape(-1, 1))
+
+# Create sequences (look back = 5 days)
+def create_dataset(dataset, look_back=5):
+    X, y = [], []
+    for i in range(len(dataset) - look_back):
+        X.append(dataset[i:(i + look_back), 0])
+        y.append(dataset[i + look_back, 0])
+    return np.array(X), np.array(y)
+
+look_back = 5
+X_lstm, y_lstm = create_dataset(scaled_data, look_back)
+X_lstm = np.reshape(X_lstm, (X_lstm.shape[0], X_lstm.shape[1], 1))
+
+# Split train/test
+split = int(0.8 * len(X_lstm))
+X_train_lstm, X_test_lstm = X_lstm[:split], X_lstm[split:]
+y_train_lstm, y_test_lstm = y_lstm[:split], y_lstm[split:]
+
+# Build simple LSTM model
+model = Sequential([
+    LSTM(50, return_sequences=False, input_shape=(look_back, 1)),
+    Dense(1)
+])
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train
+model.fit(X_train_lstm, y_train_lstm, epochs=30, batch_size=4, verbose=0)
+
+# Predict
+predictions = model.predict(X_test_lstm)
+predictions = scaler.inverse_transform(predictions)
+y_test_inv = scaler.inverse_transform(y_test_lstm.reshape(-1, 1))
+
+# Plot results
+plt.figure(figsize=(10, 5))
+plt.plot(y_test_inv, color="blue", label="Actual Prices")
+plt.plot(predictions, color="red", linestyle='--', label="LSTM Predictions")
+plt.title("🤖 LSTM - Stock Price Prediction")
+plt.xlabel("Time Step")
+plt.ylabel("Price")
+plt.legend()
+plt.show()
